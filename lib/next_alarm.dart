@@ -11,4 +11,8 @@ class NextAlarm {
       return null;
     }
   }
+  /// Fires whenever the next scheduled alarm changes.
+  Stream<DateTime?> get onNextAlarmChanged {
+    return NextAlarmPlatform.instance.onNextAlarmChanged;
+  }
 }

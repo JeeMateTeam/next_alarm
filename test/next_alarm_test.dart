@@ -10,6 +10,9 @@ class MockNextAlarmPlatform
 
   @override
   Future<DateTime?> getNextAlarm() => Future.value(DateTime.now());
+
+  @override
+  Stream<DateTime?> onNextAlarmChanged = Stream<DateTime?>.periodic(const Duration(seconds: 1), (x) => DateTime.now());
 }
 
 void main() {

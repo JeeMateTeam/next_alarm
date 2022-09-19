@@ -26,4 +26,9 @@ abstract class NextAlarmPlatform extends PlatformInterface {
   Future<DateTime?> getNextAlarm() async {
     return await _instance.getNextAlarm();
   }
+
+  /// Returns a Stream of DateTime? changes.
+  Stream<DateTime?> get onNextAlarmChanged {
+    return _instance.onNextAlarmChanged;
+  }
 }
