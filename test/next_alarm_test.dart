@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:next_alarm/next_alarm.dart';
+import 'package:next_alarm/next_alarm_info.dart';
 import 'package:next_alarm/next_alarm_platform_interface.dart';
 import 'package:next_alarm/next_alarm_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -9,10 +10,10 @@ class MockNextAlarmPlatform
     implements NextAlarmPlatform {
 
   @override
-  Future<DateTime?> getNextAlarm() => Future.value(DateTime.now());
+  Future<NextAlarmInfo?> getNextAlarm() => Future.value(NextAlarmInfo());
 
   @override
-  Stream<DateTime?> onNextAlarmChanged = Stream<DateTime?>.periodic(const Duration(seconds: 1), (x) => DateTime.now());
+  Stream<NextAlarmInfo?> onNextAlarmChanged = Stream<NextAlarmInfo?>.periodic(const Duration(seconds: 1), (x) => NextAlarmInfo());
 }
 
 void main() {

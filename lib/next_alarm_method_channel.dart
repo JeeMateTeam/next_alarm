@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'next_alarm_platform_interface.dart';
+import 'next_alarm_info.dart';
 
 /// An implementation of [NextAlarmPlatform] that uses method channels.
 class MethodChannelNextAlarm extends NextAlarmPlatform {
@@ -9,36 +10,39 @@ class MethodChannelNextAlarm extends NextAlarmPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('next_alarm');
 
-  DateTime? parseNextAlarmEvent(dynamic event) {
-    var nextDate = int.tryParse('$event');
-    if (nextDate!=null && nextDate>=0) {
-      return DateTime.fromMillisecondsSinceEpoch(nextDate);
+  NextAlarmInfo? parseNextAlarmEvent(dynamic event) {
+    try {
+      return NextAlarmInfo.fromMap(Map<String, dynamic>.from(event));
+    } catch (e) {
+      debugPrint("NextAlarm:parseNextAlarmEvent failed : '${e.toString()}'.");
     }
     return null;
   }
 
   @override
-  Future<DateTime?> getNextAlarm() async {
+  Future<NextAlarmInfo?> getNextAlarm() async {
     try {
       var res = await methodChannel.invokeMethod('getNextAlarm');
-      var nextDate = parseNextAlarmEvent(res);
-      if (nextDate==null) {
-        print('getNextAlarm: no next alarm');
+      if (res!=null) {
+        final result =  parseNextAlarmEvent(res);
+        if (result!=null) {
+          return result;
+        }
+        debugPrint('NextAlarm:getNextAlarm: No alarm is scheduled');
       }
-      return nextDate;
     } on PlatformException catch (e) {
-      print("getNextAlarm failed : '${e.message}'.");
-      return null;
+      debugPrint("NextAlarm:getNextAlarm failed : '${e.message}'.");
     }
+    return null;
   }
 
   /// The event channel used to receive DateTime changes from the native platform.
   @visibleForTesting
   EventChannel eventChannel = const EventChannel('next_alarm_changed');
 
-  Stream<DateTime?>? _onNextAlarmChanged;
+  Stream<NextAlarmInfo?>? _onNextAlarmChanged;
   @override
-  Stream<DateTime?> get onNextAlarmChanged {
+  Stream<NextAlarmInfo?> get onNextAlarmChanged {
     _onNextAlarmChanged ??= eventChannel.receiveBroadcastStream().map((dynamic event) => parseNextAlarmEvent(event));
     return _onNextAlarmChanged!;
   }

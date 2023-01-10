@@ -18,7 +18,12 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-
+import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.GregorianCalendar
+import java.util.TimeZone
 
 /** NextAlarmPlugin */
 class NextAlarmPlugin: FlutterPlugin, MethodCallHandler, StreamHandler {
@@ -28,6 +33,7 @@ class NextAlarmPlugin: FlutterPlugin, MethodCallHandler, StreamHandler {
   /// when the Flutter Engine is detached from the Activity
   private lateinit var channel : MethodChannel
   private var applicationContext: Context? = null
+  private val TAG = "NextAlarm"
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     applicationContext = flutterPluginBinding.applicationContext
@@ -55,20 +61,44 @@ class NextAlarmPlugin: FlutterPlugin, MethodCallHandler, StreamHandler {
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  private fun getNextAlarmDate(): String {
-    var nextAlarm = ""
+  private fun getNextAlarmDate(): Map<String, Any?> {
+    var alarmSource = ""
+    var triggerTime = 0L
+    var local = ""
+    var utc = "unavailable"
+
     try {
       val alarmManager = applicationContext?.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-      if (alarmManager == null) {
-        return "";
-      }
+      val alarmClockInfo = alarmManager.nextAlarmClock
 
-      val aci: AlarmManager.AlarmClockInfo? = alarmManager.nextAlarmClock
-      nextAlarm = aci?.triggerTime?.toString() ?: ""
+      if (alarmClockInfo  != null) {
+        triggerTime = alarmClockInfo.triggerTime
+        alarmSource = alarmClockInfo?.showIntent?.creatorPackage ?: "Unknown"
+        Log.d(TAG, "Next alarm is scheduled by $alarmSource with trigger time $triggerTime");
+
+        val calendar: Calendar = GregorianCalendar()
+        calendar.timeInMillis = triggerTime
+        val fmtLocal = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        fmtLocal.setCalendar(calendar)
+        local = fmtLocal.format(calendar.time)
+
+        val fmtUTF = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        fmtUTF.timeZone = TimeZone.getTimeZone("UTC")
+        utc = fmtUTF.format(Date(triggerTime))
+      }
+      else {
+        Log.d(TAG, "No alarm is scheduled")
+      }
     } catch (e: Exception) {
-      e.printStackTrace()
+      Log.e(TAG, "Error getting the next alarm info", e)
     }
-    return nextAlarm;
+
+    return mapOf(
+            "alarmSource" to alarmSource,
+            "local" to local,
+            "triggerTime" to triggerTime,
+            "utc" to utc
+    );
   }
 
 
@@ -80,7 +110,7 @@ class NextAlarmPlugin: FlutterPlugin, MethodCallHandler, StreamHandler {
     nextAlarmReceiver = createNextAlarmChangeReceiver(events)
     applicationContext!!.registerReceiver(
             nextAlarmReceiver, IntentFilter(ACTION_NEXT_ALARM_CLOCK_CHANGED))
-    val status: String = getNextAlarmDate()
+    val status: Map<String, Any?> = getNextAlarmDate()
     publishNextAlarm(events, status)
   }
 
@@ -89,7 +119,7 @@ class NextAlarmPlugin: FlutterPlugin, MethodCallHandler, StreamHandler {
     nextAlarmReceiver = null
   }
 
-  private fun publishNextAlarm(events: EventSink, status: String?) {
+  private fun publishNextAlarm(events: EventSink, status: Map<String, Any?>?) {
     if (status != null) {
       events.success(status)
     } else {

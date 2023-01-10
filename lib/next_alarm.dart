@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'next_alarm_platform_interface.dart';
+import 'next_alarm_info.dart';
 
 class NextAlarm {
   /// Get next scheduled alarm
-  Future<DateTime?> getNextAlarm() async {
+  Future<NextAlarmInfo?> getNextAlarm() async {
     if (Platform.isAndroid) {
       return await NextAlarmPlatform.instance.getNextAlarm();
     } else {
@@ -12,7 +13,8 @@ class NextAlarm {
     }
   }
   /// Fires whenever the next scheduled alarm changes.
-  Stream<DateTime?> get onNextAlarmChanged {
+  Stream<NextAlarmInfo?> get onNextAlarmChanged {
     return NextAlarmPlatform.instance.onNextAlarmChanged;
   }
 }
+

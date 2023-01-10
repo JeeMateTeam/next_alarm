@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:next_alarm/next_alarm.dart';
+import 'package:next_alarm/next_alarm_info.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +17,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  DateTime? _nextAlarm;
+  NextAlarmInfo? _nextAlarm;
   final _nextAlarmPlugin = NextAlarm();
 
   @override
@@ -25,21 +26,15 @@ class _MyAppState extends State<MyApp> {
     initPlatformState();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    DateTime? nextAlarm;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
+    NextAlarmInfo? nextAlarm;
+
     try {
       nextAlarm = await _nextAlarmPlugin.getNextAlarm();
-      if (nextAlarm == null) print('No alarm or failed to get it');
     } on PlatformException {
-      print('Failed to get next alarm.');
+      debugPrint('Failed to get next alarm.');
     }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
     if (!mounted) return;
 
     setState(() {
@@ -54,8 +49,17 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('NextAlarm example app'),
         ),
-        body: Center(
-          child: Text('Next alarm: ${_nextAlarm ?? 'unknown'}\n'),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_nextAlarm==null)
+              const Text('No scheduled alarm')
+            else
+              Text('Next alarm is scheduled by ${_nextAlarm!.alarmSource}\n'
+                  'triggerTime: ${_nextAlarm!.triggerTime}\n'
+                  'localTime: ${_nextAlarm!.localTime}\n'
+                  'utcTime: ${_nextAlarm!.utcTime}'),
+          ],
         ),
       ),
     );

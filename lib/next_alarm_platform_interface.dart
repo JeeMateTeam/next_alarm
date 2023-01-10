@@ -1,6 +1,7 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'next_alarm_method_channel.dart';
+import 'next_alarm_info.dart';
 
 abstract class NextAlarmPlatform extends PlatformInterface {
   /// Constructs a NextAlarmPlatform.
@@ -23,12 +24,12 @@ abstract class NextAlarmPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<DateTime?> getNextAlarm() async {
+  Future<NextAlarmInfo?> getNextAlarm() async {
     return await _instance.getNextAlarm();
   }
 
   /// Returns a Stream of DateTime? changes.
-  Stream<DateTime?> get onNextAlarmChanged {
+  Stream<NextAlarmInfo?> get onNextAlarmChanged {
     return _instance.onNextAlarmChanged;
   }
 }
